@@ -1,0 +1,6 @@
+artifact_location: s3://capstone-mlflow/0
+creation_time: 1755275283238
+experiment_id: '0'
+last_update_time: 1755275283238
+lifecycle_stage: active
+name: Default

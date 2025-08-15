@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/Deepu/OneDrive/Desktop/youtube-comment-sentiment-analysis/notebooks/mlruns/0/ab994393ccf9485f91ef2381a9f3815e/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ab994393ccf9485f91ef2381a9f3815e
+run_name: Imbalance_class_weights_RandomForest_TFIDF_Trigrams
+run_uuid: ab994393ccf9485f91ef2381a9f3815e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1755263483251
+status: 1
+tags: []
+user_id: Deepu
