@@ -108,24 +108,24 @@ Project Organization
 
 ## ⚙️ Running the Project Locally
 
-# 1. Clone the repo
+ 1. Clone the repo
 git clone https://github.com/<your-username>/youtube-comment-sentiment-analysis.git
 cd youtube-comment-sentiment-analysis
 
-# 2. Create virtual environment
+ 2. Create virtual environment
 conda create -n yt_project python=3.10
 conda activate yt_project
 
-# 3. Install dependencies
+ 3. Install dependencies
 pip install -r requirements.txt
-
-# 4. Reproduce pipeline
+ 
+4. Reproduce pipeline
 dvc repro
 
-# 5. Push artifacts to remote storage
+5. Push artifacts to remote storage
 dvc push
 
-🔄 CI/CD Pipeline
+#🔄 CI/CD Pipeline
 
 GitHub Actions for automated:
 
