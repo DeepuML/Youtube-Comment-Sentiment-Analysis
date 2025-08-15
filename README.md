@@ -124,21 +124,3 @@ dvc repro
 
 5. Push artifacts to remote storage
 dvc push
-
-#🔄 CI/CD Pipeline
-
-GitHub Actions for automated:
-
-Testing
-
-Model training & evaluation
-
-Model registration in MLflow
-
-AWS EC2 hosting the MLflow tracking server
-
-AWS S3 bucket for storing model artifacts
-
-Automatic model promotion to "Staging" in MLflow upon passing evaluation metrics
-
-
