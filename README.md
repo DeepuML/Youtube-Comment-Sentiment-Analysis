@@ -1,7 +1,24 @@
-youtube-comment-sentiment-analysis
-==============================
+# Youtube-Comment-Sentiment-Analysis
 
-A chrome plugin to detect youtube comment sentiments .
+A Chrome extension that detects the sentiment of YouTube comments in real-time using a trained machine learning model.  
+The project is fully automated with **MLflow** for experiment tracking & model registry, **DVC** for data and model versioning, and a **CI/CD pipeline** for continuous training and deployment.
+
+---
+
+## 📌 Features
+
+- **Data Pipeline (DVC)** – Handles raw YouTube comment data ingestion, preprocessing, and model training.
+- **Sentiment Model** – Trained LightGBM model for positive/negative/neutral comment classification.
+- **MLflow Integration** – Experiment tracking, model versioning, and registry.
+- **Automated Model Registration** – Models are automatically pushed to MLflow Registry with stage/alias tagging.
+- **Chrome Extension** – Displays comment sentiment directly on YouTube pages.
+- **CI/CD Pipeline** – GitHub Actions workflow runs the full pipeline (`dvc repro`) and updates the deployed model.
+
+---
+
+## 📂 Project Organization
+
+
 
 Project Organization
 ------------
@@ -54,4 +71,56 @@ Project Organization
 
 --------
 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+
+---
+
+## 🚀 How It Works
+
+1. **Data Ingestion**  
+   - Fetches YouTube comment data (via API or local dataset)  
+   - Stores raw data in `data/raw`  
+
+2. **Preprocessing**  
+   - Cleans text, removes noise, tokenizes  
+   - Stores intermediate datasets in `data/interim`  
+
+3. **Feature Engineering**  
+   - Generates features for model training  
+   - Saves processed data in `data/processed`  
+
+4. **Model Training**  
+   - Trains a LightGBM model on processed features  
+   - Logs metrics and artifacts to MLflow  
+
+5. **Model Evaluation**  
+   - Generates metrics, confusion matrix, ROC curve  
+   - Stores reports in `reports/`  
+
+6. **Model Registration**  
+   - Pushes the trained model to MLflow Model Registry  
+   - Transitions to `Staging` or tags with `environment=staging`  
+
+7. **Chrome Extension Integration**  
+   - The extension loads the latest deployed model  
+   - Highlights YouTube comments with sentiment color codes  
+
+---
+
+## ⚙️ Running the Project Locally
+
+ 1. Clone the repo
+git clone https://github.com/<your-username>/youtube-comment-sentiment-analysis.git
+cd youtube-comment-sentiment-analysis
+
+ 2. Create virtual environment
+conda create -n yt_project python=3.10
+conda activate yt_project
+
+ 3. Install dependencies
+pip install -r requirements.txt
+ 
+4. Reproduce pipeline
+dvc repro
+
+5. Push artifacts to remote storage
+dvc push
