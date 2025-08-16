@@ -2,4 +2,4 @@
     autostage = true
     remote = myremote
 ['remote "myremote"']
-    url = ../arn:aws:s3:::dvc-mlflow1
+    url = s3://dvc-mlflow1
