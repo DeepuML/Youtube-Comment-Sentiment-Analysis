@@ -1,5 +1,5 @@
 [core]
-    remote = myremote
     autostage = true
+    remote = myremote
 ['remote "myremote"']
-    url = C:\Users\Deepu\AppData\Local\Temp
+    url = ../arn:aws:s3:::dvc-mlflow1
