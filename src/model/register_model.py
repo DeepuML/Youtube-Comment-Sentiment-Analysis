@@ -11,15 +11,14 @@ import requests
 from mlflow.exceptions import RestException
 from mlflow.tracking import MlflowClient
 
-<<<<<<< HEAD
+
 # -------------------------------
 # Configure MLflow Tracking URI
-# -------------------------------
-mlflow.set_tracking_uri("http://52.204.155.208:8000/")
-=======
+
+
 # Set up MLflow tracking URI
-mlflow.set_tracking_uri("http://13.220.125.159:8000/")
->>>>>>> f5495bf (Added CI CD Workflow)
+mlflow.set_tracking_uri("http://34.224.212.114:8000/")
+
 
 # -------------------------------
 # Logging setup
