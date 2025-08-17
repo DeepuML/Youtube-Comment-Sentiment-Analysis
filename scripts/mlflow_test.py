@@ -2,11 +2,7 @@ import mlflow
 import random
 
 # Set the MLflow tracking URI
-<<<<<<< HEAD
 mlflow.set_tracking_uri("http://34.224.212.114:8000/")
-=======
-mlflow.set_tracking_uri("http://34.224.212.114:8000/")
->>>>>>> f5495bf (Added CI CD Workflow)
 
 # Start an MLflow run
 with mlflow.start_run():
