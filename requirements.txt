@@ -8,7 +8,7 @@ alembic==1.13.2
 amqp==5.2.0
 aniso8601==9.0.1
 annotated-types==0.7.0
-antlr4-python3-runtime==4.9.3
+antlr4-python3-runtime==4.13.2
 anyio==4.4.0
 appdirs==1.4.4
 asyncssh==2.15.0
