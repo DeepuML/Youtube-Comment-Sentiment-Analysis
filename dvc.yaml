@@ -1,111 +1,161 @@
-# stages:
-#   data_ingestion:
-#     cmd: python src/data/data_ingestion.py
-#     deps:
-#       - src/data/data_ingestion.py
-#     params:
-#       - data_ingestion.test_size
-#     outs:
-#       - data/raw
+# # stages:
+# #   data_ingestion:
+# #     cmd: python src/data/data_ingestion.py
+# #     deps:
+# #       - src/data/data_ingestion.py
+# #     params:
+# #       - data_ingestion.test_size
+# #     outs:
+# #       - data/raw
 
     
+# #   data_preprocessing:
+# #     cmd: python src/data/data_preprocessing.py
+# #     deps:
+# #     - data/raw/train.csv
+# #     - data/raw/test.csv
+# #     - src/data/data_preprocessing.py
+# #     outs:
+# #     - data/interim
+
+
+# #   model_building:
+# #     cmd: python src/model/model_building.py
+# #     deps:
+# #     - data/interim/train_processed.csv
+# #     - src/model/model_building.py
+# #     params:
+# #     - model_building.max_features
+# #     - model_building.ngram_range
+# #     - model_building.learning_rate
+# #     - model_building.max_depth
+# #     - model_building.n_estimators
+# #     outs:
+# #     - lgbm_model.pkl
+# #     - tfidf_vectorizer.pkl
+
+
+# #   model_evaluation:
+# #     cmd: python src/model/model_evaluation.py
+# #     deps:
+# #     - lgbm_model.pkl
+# #     - tfidf_vectorizer.pkl
+# #     - data/interim/train_processed.csv
+# #     - data/interim/test_processed.csv
+# #     - src/model/model_evaluation.py
+# #     outs:
+# #     - experiment_info.json
+
+# #   model_registration:
+# #     cmd: python src/model/register_model.py
+# #     deps:
+# #     - experiment_info.json
+# #     - src/model/register_model.py  
+
+
+# stages:
+#   # Stage 1: Data ingestion (fetch raw data)
+#   data_ingestion:
+#     cmd: python src/data/data_ingestion.py    # Command to run the data ingestion script
+#     deps:                                     # Dependencies (files/scripts used in this stage)
+#       - src/data/data_ingestion.py
+#     params:                                   # Parameters from params.yaml that affect this stage
+#       - data_ingestion.test_size
+#     outs:                                     # Output directory for raw data
+#       - data/raw
+
+#   # Stage 2: Data preprocessing (clean & transform raw data)
 #   data_preprocessing:
-#     cmd: python src/data/data_preprocessing.py
-#     deps:
-#     - data/raw/train.csv
-#     - data/raw/test.csv
-#     - src/data/data_preprocessing.py
-#     outs:
-#     - data/interim
+#     cmd: python src/data/data_preprocessing.py # Command to preprocess raw data
+#     deps:                                      # Dependencies (raw data + preprocessing script)
+#       - data/raw/train.csv
+#       - data/raw/test.csv
+#       - src/data/data_preprocessing.py
+#     outs:                                      # Output directory for interim (cleaned) data
+#       - data/interim
 
-
+#   # Stage 3: Model building (train LightGBM model and save artifacts)
 #   model_building:
-#     cmd: python src/model/model_building.py
-#     deps:
-#     - data/interim/train_processed.csv
-#     - src/model/model_building.py
-#     params:
-#     - model_building.max_features
-#     - model_building.ngram_range
-#     - model_building.learning_rate
-#     - model_building.max_depth
-#     - model_building.n_estimators
-#     outs:
-#     - lgbm_model.pkl
-#     - tfidf_vectorizer.pkl
+#     cmd: python src/model/model_building.py    # Command to train the model
+#     deps:                                      # Dependencies (processed data + training script)
+#       - data/interim/train_processed.csv
+#       - src/model/model_building.py
+#     params:                                    # Training parameters from params.yaml
+#       - model_building.max_features
+#       - model_building.ngram_range
+#       - model_building.learning_rate
+#       - model_building.max_depth
+#       - model_building.n_estimators
+#     outs:                                      # Output artifacts (trained model + vectorizer)
+#       - lgbm_model.pkl
+#       - tfidf_vectorizer.pkl
 
-
+#   # Stage 4: Model evaluation (evaluate trained model & log results)
 #   model_evaluation:
-#     cmd: python src/model/model_evaluation.py
-#     deps:
-#     - lgbm_model.pkl
-#     - tfidf_vectorizer.pkl
-#     - data/interim/train_processed.csv
-#     - data/interim/test_processed.csv
-#     - src/model/model_evaluation.py
-#     outs:
-#     - experiment_info.json
+#     cmd: python src/model/model_evaluation.py  # Command to run model evaluation
+#     deps:                                      # Dependencies (trained model, vectorizer, test data)
+#       - lgbm_model.pkl
+#       - tfidf_vectorizer.pkl
+#       - data/interim/train_processed.csv
+#       - data/interim/test_processed.csv
+#       - src/model/model_evaluation.py
+#     outs:                                      # Output file containing experiment info
+#       - experiment_info.json
 
+#   # Stage 5: Model registration (register evaluated model into registry)
 #   model_registration:
-#     cmd: python src/model/register_model.py
-#     deps:
-#     - experiment_info.json
-#     - src/model/register_model.py  
-
+#     cmd: python src/model/register_model.py    # Command to run model registration
+#     deps:                                      # Dependencies (experiment info file + script)
+#       - experiment_info.json
+#       - src/model/register_model.py
 
 stages:
-  # Stage 1: Data ingestion (fetch raw data)
   data_ingestion:
-    cmd: python src/data/data_ingestion.py    # Command to run the data ingestion script
-    deps:                                     # Dependencies (files/scripts used in this stage)
+    cmd: python src/data/data_ingestion.py
+    deps:
       - src/data/data_ingestion.py
-    params:                                   # Parameters from params.yaml that affect this stage
+    params:
       - data_ingestion.test_size
-    outs:                                     # Output directory for raw data
+    outs:
       - data/raw
 
-  # Stage 2: Data preprocessing (clean & transform raw data)
   data_preprocessing:
-    cmd: python src/data/data_preprocessing.py # Command to preprocess raw data
-    deps:                                      # Dependencies (raw data + preprocessing script)
-      - data/raw/train.csv
+    cmd: python src/data/data_preprocessing.py
+    deps:
       - data/raw/test.csv
+      - data/raw/train.csv
       - src/data/data_preprocessing.py
-    outs:                                      # Output directory for interim (cleaned) data
+    outs:
       - data/interim
 
-  # Stage 3: Model building (train LightGBM model and save artifacts)
   model_building:
-    cmd: python src/model/model_building.py    # Command to train the model
-    deps:                                      # Dependencies (processed data + training script)
+    cmd: python src/model/model_building.py
+    deps:
       - data/interim/train_processed.csv
       - src/model/model_building.py
-    params:                                    # Training parameters from params.yaml
-      - model_building.max_features
-      - model_building.ngram_range
+    params:
       - model_building.learning_rate
       - model_building.max_depth
+      - model_building.max_features
       - model_building.n_estimators
-    outs:                                      # Output artifacts (trained model + vectorizer)
+      - model_building.ngram_range
+    outs:
       - lgbm_model.pkl
       - tfidf_vectorizer.pkl
 
-  # Stage 4: Model evaluation (evaluate trained model & log results)
   model_evaluation:
-    cmd: python src/model/model_evaluation.py  # Command to run model evaluation
-    deps:                                      # Dependencies (trained model, vectorizer, test data)
-      - lgbm_model.pkl
-      - tfidf_vectorizer.pkl
-      - data/interim/train_processed.csv
+    cmd: python src/model/model_evaluation.py
+    deps:
       - data/interim/test_processed.csv
+      - data/interim/train_processed.csv
+      - lgbm_model.pkl
       - src/model/model_evaluation.py
-    outs:                                      # Output file containing experiment info
+      - tfidf_vectorizer.pkl
+    outs:
       - experiment_info.json
 
-  # Stage 5: Model registration (register evaluated model into registry)
   model_registration:
-    cmd: python src/model/register_model.py    # Command to run model registration
-    deps:                                      # Dependencies (experiment info file + script)
+    cmd: python src/model/register_model.py
+    deps:
       - experiment_info.json
       - src/model/register_model.py
-
