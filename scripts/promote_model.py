@@ -2,8 +2,8 @@ import os
 import mlflow
 
 def promote_model():
-    # Set up AWS MLflow tracking URI
-    mlflow.set_tracking_uri("http://34.224.212.114:8000/")
+    # Set up MLflow tracking URI from environment variable
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000"))
 
     client = mlflow.MlflowClient()
 

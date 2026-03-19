@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend before importing pyplot
 
+import os
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import io
@@ -42,14 +43,17 @@ def preprocess_comment(comment):
         return comment
 
 def load_model_and_vectorizer(model_name, model_version, vectorizer_path):
-    mlflow.set_tracking_uri("http://34.224.212.114:8000/")  # Replace with your MLflow tracking URI
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000"))
     client = MlflowClient()
     model_uri = f"models:/{model_name}/{model_version}"
     model = mlflow.pyfunc.load_model(model_uri)
     vectorizer = joblib.load(vectorizer_path)
     return model, vectorizer
 
-model, vectorizer = load_model_and_vectorizer("yt_chrome_plugin_model", "4", "./tfidf_vectorizer.pkl")
+_model_name = os.environ.get("MODEL_NAME", "yt_chrome_plugin_model")
+_model_version = os.environ.get("MODEL_VERSION", "Production")
+_vectorizer_path = os.environ.get("VECTORIZER_PATH", "./tfidf_vectorizer.pkl")
+model, vectorizer = load_model_and_vectorizer(_model_name, _model_version, _vectorizer_path)
 
 @app.route('/')
 def home():

@@ -7,7 +7,7 @@ The project is fully automated with **MLflow** for experiment tracking & model r
 
 ## 📌 Features
 
-- **Data Pipeline (DVC)** – Handles raw YouTube comment data ingestion, preprocessing, and model training.
+- **Data Pipeline (DVC)** – Ingests real YouTube comment data, preprocesses it, and trains a sentiment model end-to-end.
 - **Sentiment Model** – Trained LightGBM model for positive/negative/neutral comment classification.
 - **MLflow Integration** – Experiment tracking, model versioning, and registry.
 - **Automated Model Registration** – Models are automatically pushed to MLflow Registry with stage/alias tagging.
@@ -18,109 +18,177 @@ The project is fully automated with **MLflow** for experiment tracking & model r
 
 ## 📂 Project Organization
 
-
-
-Project Organization
-------------
-
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
-
---------
-
+```
+├── LICENSE
+├── Makefile                    <- Makefile with commands like `make data`
+├── README.md                   <- Top-level README for developers
+├── appsec.yml                  <- AWS CodeDeploy AppSpec file
+├── Dockerfile                  <- Docker image for the Flask API
+├── dvc.yaml                    <- DVC pipeline definition
+├── params.yaml                 <- Hyperparameters and pipeline configuration
+├── requirements.txt            <- Python dependencies for the ML pipeline
+├── setup.py                    <- Makes project pip-installable (pip install -e .)
+├── tox.ini                     <- Tox configuration
+│
+├── data/                       <- Data directory (managed by DVC, excluded from git)
+│   ├── raw/                    <- Raw comment data downloaded from the configured URL
+│   └── interim/                <- Preprocessed data ready for model training
+│
+├── deploy/
+│   └── scripts/
+│       ├── install_dependencies.sh   <- EC2 setup script (Docker + AWS CLI)
+│       └── start_docker.sh           <- Pulls and starts the Docker container on EC2
+│
+├── flask_app/
+│   ├── app.py                  <- Flask REST API (sentiment prediction endpoints)
+│   └── requirements.txt        <- Flask app Python dependencies
+│
+├── models/                     <- Placeholder for locally stored models
+│
+├── notebooks/                  <- Jupyter notebooks for exploration and experiments
+│
+├── references/                 <- Data dictionaries and explanatory materials
+│
+├── reports/
+│   └── figures/                <- Generated plots and confusion matrices
+│
+├── scripts/
+│   ├── mlflow_test.py          <- Smoke-test for MLflow connectivity
+│   ├── promote_model.py        <- Promotes the staging model to production
+│   ├── test_flask_api.py       <- pytest tests for Flask API endpoints
+│   ├── test_load_model.py      <- pytest test: model loads from MLflow registry
+│   ├── test_model_performance.py <- pytest test: model meets accuracy thresholds
+│   └── test_model_signature.py <- pytest test: model signature is correct
+│
+└── src/
+    ├── __init__.py
+    ├── data/
+    │   ├── __init__.py
+    │   ├── data_ingestion.py       <- Downloads & splits YouTube comment data
+    │   └── data_preprocessing.py  <- Cleans and normalises comment text
+    ├── features/
+    │   └── __init__.py
+    ├── model/
+    │   ├── __init__.py
+    │   ├── model_building.py       <- TF-IDF vectorisation + LightGBM training
+    │   ├── model_evaluation.py     <- Evaluation metrics, confusion matrix, MLflow logging
+    │   └── register_model.py      <- Registers model in MLflow Model Registry
+    └── visualization/
+        └── __init__.py
+```
 
 ---
 
 ## 🚀 How It Works
 
-1. **Data Ingestion**  
-   - Fetches YouTube comment data (via API or local dataset)  
-   - Stores raw data in `data/raw`  
+1. **Data Ingestion** (`src/data/data_ingestion.py`)
+   - Downloads YouTube comment data from the URL configured in `params.yaml`
+   - Normalizes column names, removes duplicates and missing values
+   - Splits into train/test sets and saves to `data/raw/`
 
-2. **Preprocessing**  
-   - Cleans text, removes noise, tokenizes  
-   - Stores intermediate datasets in `data/interim`  
+2. **Preprocessing** (`src/data/data_preprocessing.py`)
+   - Converts text to lowercase, removes noise, strips stopwords (preserving negation words)
+   - Lemmatises tokens
+   - Saves processed data to `data/interim/`
 
-3. **Feature Engineering**  
-   - Generates features for model training  
-   - Saves processed data in `data/processed`  
+3. **Model Training** (`src/model/model_building.py`)
+   - Applies TF-IDF vectorisation (configurable n-grams and feature count)
+   - Trains a LightGBM multiclass classifier
+   - Saves model and vectoriser to the project root
 
-4. **Model Training**  
-   - Trains a LightGBM model on processed features  
-   - Logs metrics and artifacts to MLflow  
+4. **Model Evaluation** (`src/model/model_evaluation.py`)
+   - Generates classification report and confusion matrix
+   - Logs all metrics, parameters, and artifacts to MLflow
 
-5. **Model Evaluation**  
-   - Generates metrics, confusion matrix, ROC curve  
-   - Stores reports in `reports/`  
+5. **Model Registration** (`src/model/register_model.py`)
+   - Registers the trained model in the MLflow Model Registry
+   - Transitions it to the `Staging` stage
 
-6. **Model Registration**  
-   - Pushes the trained model to MLflow Model Registry  
-   - Transitions to `Staging` or tags with `environment=staging`  
+6. **CI/CD Pipeline** (`.github/workflows/cicd.yaml`)
+   - Triggered on every push to `master`
+   - Runs `dvc repro`, runs model validation tests, promotes to Production, then builds and pushes a Docker image to ECR and deploys via AWS CodeDeploy
 
-7. **Chrome Extension Integration**  
-   - The extension loads the latest deployed model  
-   - Highlights YouTube comments with sentiment color codes  
+7. **Chrome Extension Integration**
+   - Calls the Flask API (`/predict`) with YouTube comment text
+   - Highlights comments with sentiment color codes (green/gray/red)
 
 ---
 
 ## ⚙️ Running the Project Locally
 
- 1. Clone the repo
-git clone https://github.com/<your-username>/youtube-comment-sentiment-analysis.git
-cd youtube-comment-sentiment-analysis
+```bash
+# 1. Clone the repo
+git clone https://github.com/<your-username>/Youtube-Comment-Sentiment-Analysis.git
+cd Youtube-Comment-Sentiment-Analysis
 
- 2. Create virtual environment
-conda create -n yt_project python=3.10
-conda activate yt_project
+# 2. Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
 
- 3. Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
- 
-4. Reproduce pipeline
+
+# 4. Set required environment variables
+export MLFLOW_TRACKING_URI="http://<your-mlflow-host>:5000"
+
+# 5. Reproduce the DVC pipeline
 dvc repro
 
-5. Push artifacts to remote storage
+# 6. Push tracked artifacts to remote storage
 dvc push
+```
+
+### Running the Flask API locally
+
+```bash
+cd flask_app
+export MLFLOW_TRACKING_URI="http://<your-mlflow-host>:5000"
+export MODEL_VERSION="Production"          # or a specific version number
+python app.py
+# API available at http://localhost:5000
+```
+
+### Running with Docker
+
+```bash
+docker build -t youtube-comment-analysis .
+docker run -p 5000:5000 \
+  -e MLFLOW_TRACKING_URI="http://<your-mlflow-host>:5000" \
+  -e MODEL_VERSION="Production" \
+  youtube-comment-analysis
+```
+
+---
+
+## 🔧 Configuration (`params.yaml`)
+
+| Parameter | Description | Default |
+|---|---|---|
+| `data_ingestion.test_size` | Fraction of data reserved for testing | `0.2` |
+| `data_ingestion.data_url` | URL of the YouTube comments CSV dataset | see params.yaml |
+| `model_building.ngram_range` | TF-IDF n-gram range | `[1, 3]` |
+| `model_building.max_features` | Maximum TF-IDF vocabulary size | `10000` |
+| `model_building.learning_rate` | LightGBM learning rate | `0.08` |
+| `model_building.max_depth` | LightGBM max tree depth | `20` |
+| `model_building.n_estimators` | Number of boosting rounds | `367` |
+
+---
+
+## 🔐 Required GitHub Secrets
+
+| Secret | Description |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | AWS access key for S3, ECR, and CodeDeploy |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key |
+| `AWS_ACCOUNT_ID` | AWS account ID (used for ECR URI construction) |
+| `MLFLOW_TRACKING_URI` | Full URI of the MLflow tracking server |
+
+---
+
+## 📊 Sentiment Classes
+
+| Label | Meaning |
+|---|---|
+| `1` | Positive |
+| `0` | Neutral |
+| `-1` | Negative |

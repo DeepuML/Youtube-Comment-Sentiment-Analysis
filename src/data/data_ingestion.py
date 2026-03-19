@@ -52,9 +52,37 @@ def load_data(data_url: str) -> pd.DataFrame:
         logger.error('Unexpected error occurred while loading the data: %s', e)
         raise
 
+def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize column names to the expected schema (clean_comment, category).
+
+    Supports common column name variants found in YouTube comment datasets.
+    """
+    column_aliases = {
+        'clean_comment': ['clean_comment', 'text', 'comment', 'comment_text', 'commentText', 'Comment'],
+        'category': ['category', 'label', 'sentiment', 'Sentiment', 'Label'],
+    }
+    rename_map = {}
+    for target, aliases in column_aliases.items():
+        if target not in df.columns:
+            for alias in aliases:
+                if alias in df.columns:
+                    rename_map[alias] = target
+                    break
+    if rename_map:
+        df = df.rename(columns=rename_map)
+        logger.debug('Columns renamed: %s', rename_map)
+    return df
+
+
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """Preprocess the data by handling missing values, duplicates, and empty strings."""
     try:
+        # Normalize column names to expected schema
+        df = normalize_columns(df)
+
+        # Keep only the required columns
+        df = df[['clean_comment', 'category']]
+
         # Removing missing values
         df.dropna(inplace=True)
         # Removing duplicates
@@ -93,9 +121,10 @@ def main():
         # Load parameters from the params.yaml in the root directory
         params = load_params(params_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../params.yaml'))
         test_size = params['data_ingestion']['test_size']
+        data_url = params['data_ingestion']['data_url']
         
         # Load data from the specified URL
-        df = load_data(data_url='https://raw.githubusercontent.com/Himanshu-1703/reddit-sentiment-analysis/refs/heads/main/data/reddit.csv')
+        df = load_data(data_url=data_url)
         
         # Preprocess the data
         final_df = preprocess_data(df)

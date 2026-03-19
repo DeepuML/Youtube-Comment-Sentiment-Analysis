@@ -114,9 +114,12 @@ def main():
     try:
         logger.debug("Starting data preprocessing...")
         
+        # Resolve the project root (two levels up from this script)
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+
         # Load raw training and testing datasets from data/raw directory
-        train_data = pd.read_csv('./data/raw/train.csv')
-        test_data = pd.read_csv('./data/raw/test.csv')
+        train_data = pd.read_csv(os.path.join(root_dir, 'data/raw/train.csv'))
+        test_data = pd.read_csv(os.path.join(root_dir, 'data/raw/test.csv'))
         logger.debug('Data loaded successfully')
 
         # Apply preprocessing to train and test data
@@ -124,7 +127,7 @@ def main():
         test_processed_data = normalize_text(test_data)
 
         # Save processed data into data/interim directory
-        save_data(train_processed_data, test_processed_data, data_path='./data')
+        save_data(train_processed_data, test_processed_data, data_path=os.path.join(root_dir, 'data'))
     except Exception as e:
         # Log and print error if preprocessing fails
         logger.error('Failed to complete the data preprocessing process: %s', e)

@@ -1,11 +1,12 @@
 import pytest
+import os
 import pandas as pd
 import pickle
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import mlflow
 
-# Set your remote tracking URI
-mlflow.set_tracking_uri("http://34.224.212.114:8000/")
+# Set MLflow tracking URI from environment variable
+mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000"))
 
 @pytest.mark.parametrize("model_name, stage, holdout_data_path, vectorizer_path", [
     ("yt_chrome_plugin_model", "staging", "data/interim/test_processed.csv", "tfidf_vectorizer.pkl"),  # Replace with your actual paths
@@ -28,11 +29,8 @@ def test_model_performance(model_name, stage, holdout_data_path, vectorizer_path
 
         # Load the holdout test data
         holdout_data = pd.read_csv(holdout_data_path)
-        X_holdout_raw = holdout_data.iloc[:, :-1].squeeze()  # Raw text features (assuming text is in the first column)
-        y_holdout = holdout_data.iloc[:, -1]  # Labels
-
-        # Handle NaN values in the text data
-        X_holdout_raw = X_holdout_raw.fillna("")
+        X_holdout_raw = holdout_data['clean_comment'].fillna("")
+        y_holdout = holdout_data['category']
 
         # Apply TF-IDF transformation
         X_holdout_tfidf = vectorizer.transform(X_holdout_raw)
