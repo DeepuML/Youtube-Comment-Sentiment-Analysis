@@ -1,5 +1,6 @@
 data_ingestion:
   test_size: 0.2
+  data_url: "https://raw.githubusercontent.com/nicholasjhana/sentiment-analysis-youtube/master/data/YTComments_clean.csv"
 
 model_building:
   ngram_range : [1,3]
