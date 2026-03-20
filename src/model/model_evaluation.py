@@ -13,29 +13,38 @@ import seaborn as sns
 import json
 from mlflow.models import infer_signature
 
-# logging configuration
+# --------------------------------------------------
+# Logging configuration for model evaluation stage
+# --------------------------------------------------
 logger = logging.getLogger('model_evaluation')
 logger.setLevel('DEBUG')
 
+# Console handler for debug-level logs
 console_handler = logging.StreamHandler()
 console_handler.setLevel('DEBUG')
 
+# File handler to store error-level logs in a file
 file_handler = logging.FileHandler('model_evaluation_errors.log')
 file_handler.setLevel('ERROR')
 
+# Log formatting: timestamp - logger name - level - message
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
 file_handler.setFormatter(formatter)
 
+# Add both console and file handlers to the logger
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
 
+# --------------------------------------------------
+# Function: Load CSV data into DataFrame
+# --------------------------------------------------
 def load_data(file_path: str) -> pd.DataFrame:
     """Load data from a CSV file."""
     try:
         df = pd.read_csv(file_path)
-        df.fillna('', inplace=True)  # Fill any NaN values
+        df.fillna('', inplace=True)  # Fill any NaN values with empty strings
         logger.debug('Data loaded and NaNs filled from %s', file_path)
         return df
     except Exception as e:
@@ -43,8 +52,11 @@ def load_data(file_path: str) -> pd.DataFrame:
         raise
 
 
+# --------------------------------------------------
+# Function: Load trained model from pickle file
+# --------------------------------------------------
 def load_model(model_path: str):
-    """Load the trained model."""
+    """Load the trained model from a pickle file."""
     try:
         with open(model_path, 'rb') as file:
             model = pickle.load(file)
@@ -55,8 +67,11 @@ def load_model(model_path: str):
         raise
 
 
+# --------------------------------------------------
+# Function: Load TF-IDF vectorizer from pickle file
+# --------------------------------------------------
 def load_vectorizer(vectorizer_path: str) -> TfidfVectorizer:
-    """Load the saved TF-IDF vectorizer."""
+    """Load the saved TF-IDF vectorizer from a pickle file."""
     try:
         with open(vectorizer_path, 'rb') as file:
             vectorizer = pickle.load(file)
@@ -67,6 +82,9 @@ def load_vectorizer(vectorizer_path: str) -> TfidfVectorizer:
         raise
 
 
+# --------------------------------------------------
+# Function: Load parameters from YAML file
+# --------------------------------------------------
 def load_params(params_path: str) -> dict:
     """Load parameters from a YAML file."""
     try:
@@ -79,45 +97,54 @@ def load_params(params_path: str) -> dict:
         raise
 
 
+# --------------------------------------------------
+# Function: Evaluate model and return metrics
+# --------------------------------------------------
 def evaluate_model(model, X_test: np.ndarray, y_test: np.ndarray):
-    """Evaluate the model and log classification metrics and confusion matrix."""
+    """Evaluate the model and return classification report and confusion matrix."""
     try:
-        # Predict and calculate classification metrics
+        # Predict labels for the test set
         y_pred = model.predict(X_test)
+        # Generate per-class precision, recall, and F1-score
         report = classification_report(y_test, y_pred, output_dict=True)
+        # Build the confusion matrix
         cm = confusion_matrix(y_test, y_pred)
-        
         logger.debug('Model evaluation completed')
-
         return report, cm
     except Exception as e:
         logger.error('Error during model evaluation: %s', e)
         raise
 
 
+# --------------------------------------------------
+# Function: Log confusion matrix as MLflow artifact
+# --------------------------------------------------
 def log_confusion_matrix(cm, dataset_name):
-    """Log confusion matrix as an artifact."""
+    """Plot the confusion matrix, save it as a PNG, and log it to MLflow."""
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
     plt.title(f'Confusion Matrix for {dataset_name}')
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
-
     # Save confusion matrix plot as a file and log it to MLflow
     cm_file_path = f'confusion_matrix_{dataset_name}.png'
     plt.savefig(cm_file_path)
     mlflow.log_artifact(cm_file_path)
     plt.close()
 
+
+# --------------------------------------------------
+# Function: Persist MLflow run info to JSON
+# --------------------------------------------------
 def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
-    """Save the model run ID and path to a JSON file."""
+    """Save the MLflow run ID and model path to a JSON file for downstream use."""
     try:
-        # Create a dictionary with the info you want to save
+        # Build the info dictionary to persist
         model_info = {
             'run_id': run_id,
             'model_path': model_path
         }
-        # Save the dictionary as a JSON file
+        # Write the dictionary as a formatted JSON file
         with open(file_path, 'w') as file:
             json.dump(model_info, file, indent=4)
         logger.debug('Model info saved to %s', file_path)
@@ -126,58 +153,64 @@ def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
         raise
 
 
+# --------------------------------------------------
+# Main function: End-to-end model evaluation process
+# --------------------------------------------------
 def main():
- 
+    # Point MLflow client at the remote tracking server
     mlflow.set_tracking_uri("http://34.224.212.114:8000/")
 
     mlflow.set_experiment('dvc-pipeline-runs1')
-    
+
     with mlflow.start_run() as run:
         try:
-            # Load parameters from YAML file
+            # Determine project root directory (two levels up from this script)
             root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
-            params = load_params(os.path.join(root_dir, 'params.yaml'))
 
-            # Log parameters
+            # Load pipeline parameters and log them to MLflow
+            params = load_params(os.path.join(root_dir, 'params.yaml'))
             for key, value in params.items():
                 mlflow.log_param(key, value)
-            
-            # Load model and vectorizer
+
+            # Load trained model and TF-IDF vectorizer from disk
             model = load_model(os.path.join(root_dir, 'lgbm_model.pkl'))
             vectorizer = load_vectorizer(os.path.join(root_dir, 'tfidf_vectorizer.pkl'))
 
-            # Load test data for signature inference
+            # Load preprocessed test data
             test_data = load_data(os.path.join(root_dir, 'data/interim/test_processed.csv'))
 
-            # Prepare test data
+            # Transform test comments using the trained vectorizer
             X_test_tfidf = vectorizer.transform(test_data['clean_comment'].values)
             y_test = test_data['category'].values
 
-            # Create a DataFrame for signature inference (using first few rows as an example)
-            input_example = pd.DataFrame(X_test_tfidf.toarray()[:5], columns=vectorizer.get_feature_names_out())  # <--- Added for signature
+            # Build an input example DataFrame for model signature inference
+            input_example = pd.DataFrame(
+                X_test_tfidf.toarray()[:5],
+                columns=vectorizer.get_feature_names_out()
+            )
 
-            # Infer the signature
-            signature = infer_signature(input_example, model.predict(X_test_tfidf[:5]))  # <--- Added for signature
+            # Infer input/output schema for the MLflow model signature
+            signature = infer_signature(input_example, model.predict(X_test_tfidf[:5]))
 
-            # Log model with signature
+            # Log model to MLflow with its signature and an input example
             mlflow.sklearn.log_model(
                 model,
                 "lgbm_model",
-                signature=signature,  # <--- Added for signature
-                input_example=input_example  # <--- Added input example
+                signature=signature,
+                input_example=input_example
             )
 
-            # Save model info
+            # Persist the run ID and model path for the registration step
             model_path = "lgbm_model"
             save_model_info(run.info.run_id, model_path, 'experiment_info.json')
 
-            # Log the vectorizer as an artifact
+            # Log the vectorizer pickle as a run artifact
             mlflow.log_artifact(os.path.join(root_dir, 'tfidf_vectorizer.pkl'))
 
-            # Evaluate model and get metrics
+            # Evaluate model performance on the test set
             report, cm = evaluate_model(model, X_test_tfidf, y_test)
 
-            # Log classification report metrics for the test data
+            # Log per-class precision, recall, and F1-score to MLflow
             for label, metrics in report.items():
                 if isinstance(metrics, dict):
                     mlflow.log_metrics({
@@ -186,10 +219,10 @@ def main():
                         f"test_{label}_f1-score": metrics['f1-score']
                     })
 
-            # Log confusion matrix
+            # Log the confusion matrix image as an artifact
             log_confusion_matrix(cm, "Test Data")
 
-            # Add important tags
+            # Tag the run with descriptive metadata
             mlflow.set_tag("model_type", "LightGBM")
             mlflow.set_tag("task", "Sentiment Analysis")
             mlflow.set_tag("dataset", "YouTube Comments")
@@ -198,5 +231,8 @@ def main():
             logger.error(f"Failed to complete model evaluation: {e}")
             print(f"Error: {e}")
 
+# --------------------------------------------------
+# Script entry point
+# --------------------------------------------------
 if __name__ == '__main__':
     main()
